@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RefactorGPT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 960px;
+    }
+    .indent {
+      margin-left: 20px;
+    }
+    button {
+      background-color: darkslateblue;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+    }
+    input[type=text], textarea, select {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+  </style>
+  
+</head>
+<body>
+  <h1>RefactorGPT</h1>
+  <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
+  <div style="display: flex; align-items: center;">
+    <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
+    <button id="save-api-key">Save Key</button>
+  </div>
+  <br />
+  <label style="font-weight: bold;" for="repo-url">GitHub Repo URL:</label>
+  <form id="repo-form" style="display: flex; align-items: center;">
+    <input style="max-width:500px;margin:0 10px;padding: 11px;" type="text" id="repo-url" name="repo-url" required>
+    <button type="submit">Get File Tree</button>
+  </form>
+  <br />
+  <div style="display: flex; justify-content: space-between;">
+    <div>
+      <h2>Select Relevant Files:</h2>
+      <div id="file-tree"></div>
+    </div>
+    <div>
+      <h2>Merged Files Preview:</h2>
+      <textarea id="output" rows="20" cols="80" readonly></textarea>
+    </div>
+  </div>
+  <br />
+  <br />
+  <h2>Instruction:</h2>
+  <textarea id="instruction" name="instruction" rows="20" cols="80" placeholder="rewrite this entire application" required></textarea>
+  <br />
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+
+    <div>
+      <label for="models">Select Model:</label>
+      <select id="models" name="models">
+        <option>gpt-4</option>
+        <option>gpt-3.5-turbo</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="temperature">Temperature:</label>
+      <input type="text" type="number" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0.1">
+    </div>
+
+    <div>
+      <label for="max-tokens">Max Tokens:</label>
+      <input type="text" type="number" id="max-tokens" name="max-tokens" min="1" value="4000">
+    </div>
+
+  </div>
+  <button id="send-to-openai">Send to OpenAI</button>
+  <br />
+  <h2>OpenAI Response:</h2>
+  <textarea id="openai-response" rows="20" cols="80" readonly></textarea>
+
+  <script>
+    document.getElementById('repo-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const repoUrl = document.getElementById('repo-url').value.split('github.com/')[1];
+      const apiUrl = `https://api.github.com/repos/${repoUrl}/contents`;
+      const response = await fetch(apiUrl);
+      const fileTree = await response.json();
+      displayFileTree(fileTree);
+    });
+
+    async function displayFileTree(fileTree, parentElement = null, indentLevel = 0) {
+      if (!parentElement) {
+        parentElement = document.getElementById('file-tree');
+        parentElement.innerHTML = '';
+      }
+
+      for (const file of fileTree) {
+        const fileElement = document.createElement('div');
+        if (indentLevel > 0) {
+          fileElement.classList.add('indent');
+        }
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = file.name;
+        checkbox.setAttribute('data-url', file.url);
+        checkbox.setAttribute('data-type', file.type);
+
+        const label = document.createElement('label');
+        label.htmlFor = file.name;
+        label.textContent = file.name;
+
+        fileElement.appendChild(checkbox);
+        fileElement.appendChild(label);
+
+        if (file.type === 'dir') {
+            const response = await fetch(file.url);
+            const childFileTree = await response.json();
+            await displayFileTree(childFileTree, fileElement, indentLevel + 1);
+            checkbox.addEventListener('change', () => {
+              const childCheckboxes = fileElement.querySelectorAll('input[type="checkbox"]');
+              for (const childCheckbox of childCheckboxes) {
+                childCheckbox.checked = checkbox.checked;
+              }
+              updateMergedFilesPreview();
+            });
+        } else {
+          checkbox.addEventListener('change', updateMergedFilesPreview);
+        }
+
+        parentElement.appendChild(fileElement);
+      }
+    }
+
+    async function updateMergedFilesPreview() {
+      const checkboxes = document.querySelectorAll('#file-tree input[type="checkbox"]');
+      const outputTextarea = document.getElementById('output');
+      outputTextarea.value = '';
+
+      for (const checkbox of checkboxes) {
+        if (checkbox.checked && checkbox.getAttribute('data-type') === 'file') {
+          const fileUrl = checkbox.getAttribute('data-url');
+          const response = await fetch(fileUrl);
+          const fileContent = await response.json();
+          const decodedContent = atob(fileContent.content);
+          const fullPath = fileContent.path;
+          outputTextarea.value += `######## ${fullPath}\n\n${decodedContent}\n\n`;
+        }
+      }
+    }
+    document.getElementById('save-api-key').addEventListener('click', () => {
+      const apiKey = document.getElementById('openai-key').value;
+      localStorage.setItem('openai-api-key', apiKey);
+    });
+
+    document.getElementById('send-to-openai').addEventListener('click', async () => {
+      const apiKey = localStorage.getItem('openai-api-key') || document.getElementById('openai-key').value;
+      if (!apiKey) {
+        alert('Please enter an API key.');
+        return;
+      }
+      const instruction = document.getElementById('instruction').value;
+      const outputTextarea = document.getElementById('output');
+      const openaiResponseTextarea = document.getElementById('openai-response');
+      const model = document.getElementById('models').value;
+      const temperature = parseFloat(document.getElementById('temperature').value);
+      const maxTokens = parseInt(document.getElementById('max-tokens').value);
+
+      const messages = outputTextarea.value.split('########').map(content => {
+        return { role: "user", content: '######## ' + content };
+      });
+      messages.push({ role: "user", content: instruction });
+
+      const sendToOpenAIButton = document.getElementById('send-to-openai');
+      sendToOpenAIButton.disabled = true;
+      sendToOpenAIButton.textContent = 'Loading...';
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          temperature: Number(temperature),
+          max_tokens: Number(maxTokens),
+        }),
+      });
+
+      const completion = await response.json();
+      openaiResponseTextarea.value = completion.choices[0].message.content;
+
+      sendToOpenAIButton.disabled = false;
+      sendToOpenAIButton.textContent = 'Send to OpenAI';
+    });
+
+    async function fetchModels() {
+      const apiKey = localStorage.getItem('openai-api-key') || document.getElementById('openai-key').value;
+      if (!apiKey) {
+        alert('Please enter an API key.');
+        return;
+      }
+
+      const response = await fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+      });
+
+      const models = await response.json();
+      populateModelDropdown(models.data);
+    }
+
+    function populateModelDropdown(models) {
+      const modelSelect = document.getElementById('models');
+      for (const model of models) {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.id;
+        modelSelect.appendChild(option);
+      }
+    }
+
+    // Load saved API key from localStorage
+    const savedApiKey = localStorage.getItem('openai-api-key');
+    if (savedApiKey) {
+      document.getElementById('openai-key').value = savedApiKey;
+      // fetchModels();
+    }
+
+    document.getElementById('save-api-key').addEventListener('click', () => {
+      const apiKey = document.getElementById('openai-key').value;
+      localStorage.setItem('openai-api-key', apiKey);
+      // fetchModels();
+    });
+  </script>
+</body>
+</html>
