@@ -93,35 +93,7 @@
   </div>
   <br />
   <br />
-  <h2>Instruction:</h2>
-  <textarea id="instruction" name="instruction" rows="20" cols="80" placeholder="rewrite this entire application" required></textarea>
-  <br />
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-
-    <div>
-      <label for="models">Select Model:</label>
-      <select id="models" name="models">
-        <option>gpt-4</option>
-        <option>gpt-3.5-turbo</option>
-      </select>
-    </div>
-
-    <div>
-      <label for="temperature">Temperature:</label>
-      <input type="text" type="number" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0.1">
-    </div>
-
-    <div>
-      <label for="max-tokens">Max Tokens:</label>
-      <input type="text" type="number" id="max-tokens" name="max-tokens" min="1" value="4000">
-    </div>
-
-  </div>
-  <button id="send-to-openai">Send to OpenAI</button>
-  <br />
-  <h2>OpenAI Response:</h2>
-  <textarea id="openai-response" rows="20" cols="80" readonly></textarea>
-
+  
   <script>
     document.getElementById('repo-form').addEventListener('submit', async (event) => {
       event.preventDefault();
