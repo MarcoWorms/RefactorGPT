@@ -38,12 +38,6 @@
 </head>
 <body>
   <h1>RefactorGPT</h1>
-  <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
-  <div style="display: flex; align-items: center;">
-    <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
-    <button id="save-api-key">Save Key</button>
-  </div>
-  <br />
   <label style="font-weight: bold;" for="repo-url">GitHub Repo URL:</label>
   <form id="repo-form" style="display: flex; align-items: center;">
     <input style="max-width:500px;margin:0 10px;padding: 11px;" type="text" id="repo-url" name="repo-url" required>
@@ -59,6 +53,43 @@
       <h2>Merged Files Preview:</h2>
       <textarea id="output" rows="20" cols="80" readonly></textarea>
     </div>
+  </div>
+  <br />
+  <br />
+  <h2>Instruction:</h2>
+  <textarea id="instruction" name="instruction" rows="20" cols="80" placeholder="rewrite this entire application" required></textarea>
+  <br />
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+
+    <div>
+      <label for="models">Select Model:</label>
+      <select id="models" name="models">
+        <option>gpt-4</option>
+        <option>gpt-3.5-turbo</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="temperature">Temperature:</label>
+      <input type="text" type="number" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0">
+    </div>
+
+    <div>
+      <label for="max-tokens">Max Tokens:</label>
+      <input type="text" type="number" id="max-tokens" name="max-tokens" min="1" value="4000">
+    </div>
+
+    <div style="display: flex; align-items: center;">
+      <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
+      <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
+      <button id="save-api-key">Save Key</button>
+    </div>
+
+  </div>
+  <button id="send-to-openai">Send to OpenAI</button>
+  <br />
+  <h2>OpenAI Response:</h2>
+  <textarea id="openai-response" rows="20" cols="80" readonly></textarea>
   </div>
   <br />
   <br />
