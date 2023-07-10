@@ -79,14 +79,14 @@
       <input type="text" type="number" id="max-tokens" name="max-tokens" min="1" value="4000">
     </div>
 
-    <div style="display: flex; align-items: center;">
-      <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
-      <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
-      <button id="save-api-key">Save Key</button>
-    </div>
 
   </div>
-  <button id="send-to-openai">Send to OpenAI</button>
+  <div style="display: flex; align-items: center;">
+    <button id="send-to-openai" style="padding-right: 10px">Send to OpenAI</button>
+    <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
+    <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
+    <button id="save-api-key">Save Key</button>
+  </div>
   <br />
   <h2>OpenAI Response:</h2>
   <textarea id="openai-response" rows="20" cols="80" readonly></textarea>
