@@ -64,21 +64,11 @@
     <div>
       <label for="models">Select Model:</label>
       <select id="models" name="models">
+        <option>gpt-4-1106-preview</option>
         <option>gpt-4</option>
         <option>gpt-3.5-turbo</option>
       </select>
     </div>
-
-    <div>
-      <label for="temperature">Temperature:</label>
-      <input type="text" type="number" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0">
-    </div>
-
-    <div>
-      <label for="max-tokens">Max Tokens:</label>
-      <input type="text" type="number" id="max-tokens" name="max-tokens" min="1" value="4000">
-    </div>
-
 
   </div>
   <div style="display: flex; align-items: center;">
@@ -179,9 +169,6 @@
       const outputTextarea = document.getElementById('output');
       const openaiResponseTextarea = document.getElementById('openai-response');
       const model = document.getElementById('models').value;
-      const temperature = parseFloat(document.getElementById('temperature').value);
-      const maxTokens = parseInt(document.getElementById('max-tokens').value);
-
       const messages = outputTextarea.value.split('########').map(content => {
         return { role: "user", content: '######## ' + content };
       });
@@ -200,8 +187,7 @@
         body: JSON.stringify({
           model: model,
           messages: messages,
-          temperature: Number(temperature),
-          max_tokens: Number(maxTokens),
+          temperature: 0,
         }),
       });
 
