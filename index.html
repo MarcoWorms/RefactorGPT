@@ -89,9 +89,16 @@
       event.preventDefault();
       const repoUrl = document.getElementById('repo-url').value.split('github.com/')[1];
       const apiUrl = `https://api.github.com/repos/${repoUrl}/contents`;
-      const response = await fetch(apiUrl);
-      const fileTree = await response.json();
-      displayFileTree(fileTree);
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error('GitHub API request failed');
+        }
+        const fileTree = await response.json();
+        displayFileTree(fileTree);
+      } catch (error) {
+        alert('Unable to fetch repo. Please confirm that its visibility is set to public and that you\'re not overusing the GitHub API.');
+      }
     });
 
     async function displayFileTree(fileTree, parentElement = null, indentLevel = 0) {
@@ -120,16 +127,24 @@
         fileElement.appendChild(label);
 
         if (file.type === 'dir') {
+          try {
             const response = await fetch(file.url);
+            if (!response.ok) {
+              throw new Error('GitHub API request failed');
+            }
             const childFileTree = await response.json();
             await displayFileTree(childFileTree, fileElement, indentLevel + 1);
-            checkbox.addEventListener('change', () => {
-              const childCheckboxes = fileElement.querySelectorAll('input[type="checkbox"]');
-              for (const childCheckbox of childCheckboxes) {
-                childCheckbox.checked = checkbox.checked;
-              }
-              updateMergedFilesPreview();
-            });
+          } catch (error) {
+            alert('Unable to fetch repo. Please confirm that its visibility is set to public and that you\'re not overusing the GitHub API.');
+            return;
+          }
+          checkbox.addEventListener('change', () => {
+            const childCheckboxes = fileElement.querySelectorAll('input[type="checkbox"]');
+            for (const childCheckbox of childCheckboxes) {
+              childCheckbox.checked = checkbox.checked;
+            }
+            updateMergedFilesPreview();
+          });
         } else {
           checkbox.addEventListener('change', updateMergedFilesPreview);
         }
@@ -146,11 +161,19 @@
       for (const checkbox of checkboxes) {
         if (checkbox.checked && checkbox.getAttribute('data-type') === 'file') {
           const fileUrl = checkbox.getAttribute('data-url');
-          const response = await fetch(fileUrl);
-          const fileContent = await response.json();
-          const decodedContent = atob(fileContent.content);
-          const fullPath = fileContent.path;
-          outputTextarea.value += `######## ${fullPath}\n\n${decodedContent}\n\n`;
+          try {
+            const response = await fetch(fileUrl);
+            if (!response.ok) {
+              throw new Error('GitHub API request failed');
+            }
+            const fileContent = await response.json();
+            const decodedContent = atob(fileContent.content);
+            const fullPath = fileContent.path;
+            outputTextarea.value += `######## ${fullPath}\n\n${decodedContent}\n\n`;
+          } catch (error) {
+            alert('Unable to fetch repo. Please confirm that its visibility is set to public and that you\'re not overusing the GitHub API.');
+            return;
+          }
         }
       }
     }
@@ -198,45 +221,15 @@
       sendToOpenAIButton.textContent = 'Send to OpenAI';
     });
 
-    async function fetchModels() {
-      const apiKey = localStorage.getItem('openai-api-key') || document.getElementById('openai-key').value;
-      if (!apiKey) {
-        alert('Please enter an API key.');
-        return;
-      }
-
-      const response = await fetch('https://api.openai.com/v1/models', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      });
-
-      const models = await response.json();
-      populateModelDropdown(models.data);
-    }
-
-    function populateModelDropdown(models) {
-      const modelSelect = document.getElementById('models');
-      for (const model of models) {
-        const option = document.createElement('option');
-        option.value = model.id;
-        option.textContent = model.id;
-        modelSelect.appendChild(option);
-      }
-    }
-
     // Load saved API key from localStorage
     const savedApiKey = localStorage.getItem('openai-api-key');
     if (savedApiKey) {
       document.getElementById('openai-key').value = savedApiKey;
-      // fetchModels();
     }
 
     document.getElementById('save-api-key').addEventListener('click', () => {
       const apiKey = document.getElementById('openai-key').value;
       localStorage.setItem('openai-api-key', apiKey);
-      // fetchModels();
     });
   </script>
 </body>
