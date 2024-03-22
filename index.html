@@ -69,12 +69,12 @@
     <a 
       id="ai-pay-link"
       href="https://chromewebstore.google.com/detail/ai-pay/igghgdjfklipjmgldcdfnpppgaijmhfg" 
-      target="_blank">Download AI Pay (safer alternative to providing an API key)</a>
+      target="_blank">Use AI Pay</a>
 
     <p>OR</p>
 
     <div>
-      <label style="font-weight: bold;" for="openai-key">OpenAI Key:</label>
+      <label style="font-weight: bold;" for="openai-key">Use your own OpenAI Key:</label>
       <input style="max-width:500px;margin:0 10px;padding: 11px;" type="password" id="openai-key" name="openai-key">
       <button id="save-api-key">Save Key</button>
     </div>
@@ -119,7 +119,7 @@
       if (!isBrowserExtensionInstalled) {
         aiProviderDetails.style.display = 'flex';
         aiPayActiveSession.style.display = 'none';
-        aiPayLink.innerText = 'Download AI Pay (safer alternative to providing an API key)';
+        aiPayLink.innerText = 'Use AI Pay';
         aiPayLink.href = 'https://chromewebstore.google.com/detail/ai-pay/igghgdjfklipjmgldcdfnpppgaijmhfg';
         return
       }
